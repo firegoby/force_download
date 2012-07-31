@@ -67,3 +67,4 @@ Class extension_force_download extends Extension
 		}
 	}
 }
+?>

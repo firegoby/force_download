@@ -1,15 +1,15 @@
 <?php
 
 	require_once(TOOLKIT . '/class.event.php');
-	
+
 	Class eventforce_download extends Event{
-		
+
 		const ROOTELEMENT = 'force-download';
-		
+
 		public $eParamFILTERS = array(
-			
+
 		);
-			
+
 		public static function about(){
 			return array(
 				'name' => 'Force Download',
@@ -51,9 +51,17 @@
 				You can also download the page itself, by adding the parameter <code>download</code> to the URL. The value of this parameter will be the name of the file. For example:
 			</p>
 			<pre class="XML"><code>'.htmlentities('<a href="/sheet/?download=sheet.xml">Download sheet in XML-format</a>').'</code></pre>
-        ';
+			<h3>Default Download Directory</h3>
+			<p>
+				The <em>first</em> directory listed in <code>$allowedDirs</code> will act as a default download directory if you do not wish to include a path in the <code>?file=</code> parameter. For example, if the first entry in <code>$allowedDirs</code> is <code>workspace/uploads</code> then a GET request of <code>?file=my-example-file.pdf</code> will download the file <code>workspace/uploads/my-example-file.pdf</code>
+			</p>
+			<h3>Missing or unauthorised files</h3>
+			<p>
+				Requests for files that cannot be found on the filesystem, or are not included in the <code>$allowedDirs</code> will show Symphony\'s 404 page.
+			</p>
+';
 		}
-		
+
 		public function load()
 		{
 			// In case of the page:
@@ -61,7 +69,7 @@
 			{
 				header('Content-Disposition: attachment; filename='.$_GET['download']);
 			}
-			
+
 			// In case of a file:
 			if(isset($_GET['file'])) {
 				// include_once('event.force_download.config.php');
@@ -71,7 +79,11 @@
 				$allowedDirs = $driver->getLocations();
 
 				$pathInfo = pathinfo($_GET['file']);
-
+        // If no directory is given use the first allowedDir as a default dir
+        if($pathInfo['dirname'] == ".")
+        {
+          $pathInfo['dirname'] = $allowedDirs[0];
+        }
 				// Check to see if the directory is allowed to direct-download from:
 				$wildCardMatch = false;
 				$info = pathinfo($_GET['file']);
@@ -114,18 +126,18 @@
 						readfile($_GET['file']);
 						exit;
 					} else {
-						die('File does not exist!');
+            throw new FrontendPageNotFoundException;
 					}
 				} else {
-					die('Permission denied!');
+          throw new FrontendPageNotFoundException;
 				}
 			}
 		}
-		
+
 		protected function __trigger(){
 			include(TOOLKIT . '/events/event.section.php');
 			return $result;
-		}		
+		}
 
 	}
 
